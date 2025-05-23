@@ -29,7 +29,8 @@ jobs:
       - name: Get Signed Upload URL from Firebase
         run: $installationCode = "${{ github.event.inputs.installationCode }}"
              $response = Invoke-RestMethod -Method POST -Uri "https://us-central1-pcmon-337e3.cloudfunctions.net/getSignedUploadUrl?installationCode=$installationCode"
-        
+             echo "signed_url=$($response.signedUrl)" >> $env:GITHUB_ENV
+
       - name: Upload MSI via Firebase Function
         run: |
             $installationCode = "${{ github.event.inputs.installationCode }}"
