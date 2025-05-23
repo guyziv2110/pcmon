@@ -26,6 +26,10 @@ jobs:
       - name: Build MSI with Wix Toolset 6
         run: dotnet build ./MyInstaller.wixproj -p:InstallationCode=${{ github.event.inputs.installationCode }} -c Release
 
+      - name: Get Signed Upload URL from Firebase
+        run: $installationCode = "${{ github.event.inputs.installationCode }}"
+             $response = Invoke-RestMethod -Method POST -Uri "https://us-central1-pcmon-337e3.cloudfunctions.net/getSignedUploadUrl?installationCode=$installationCode"
+        
       - name: Upload MSI via Firebase Function
         run: |
             $installationCode = "${{ github.event.inputs.installationCode }}"
