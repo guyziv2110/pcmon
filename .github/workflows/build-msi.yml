@@ -1,2 +1,56 @@
+name: Build and Upload MSI
 
+on:
+  workflow_dispatch:
+    inputs:
+      installationCode:
+        description: 'Unique Installation Code (e.g. a GUID)'
+        required: true
 
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Publish InstallationUtility
+        run: dotnet publish ./InstallationUtility/InstallationUtility.sln -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+
+      - name: Build MSI with Wix Toolset 6
+        run: dotnet build ./MyInstaller.wixproj -p:InstallationCode=${{ github.event.inputs.installationCode }} -c Release
+
+      - name: Upload MSI via Firebase Function
+        run: |
+          $installationCode = "${{ github.event.inputs.installationCode }}"
+          $msiPath = "bin\Release\en-US\MyInstaller.msi"  # עדכן לנתיב הנכון
+          
+          # בדיקה שהקובץ קיים
+          if (-not (Test-Path $msiPath)) {
+            Write-Error "MSI file not found at: $msiPath"
+            Get-ChildItem -Recurse -Filter "*.msi" | ForEach-Object { Write-Host "Found MSI: $($_.FullName)" }
+            exit 1
+          }
+          
+          # העלאה דרך Firebase Function שלך
+          $url = "https://us-central1-pcmon-337e3.cloudfunctions.net/uploadMSI?installationCode=$installationCode"
+          
+          try {
+            $response = Invoke-RestMethod -Uri $url `
+              -Method POST `
+              -Headers @{"Content-Type" = "application/octet-stream"} `
+              -InFile $msiPath
+            
+            Write-Host "Upload successful!"
+            Write-Host "Download URL: $($response.downloadURL)"
+            
+          } catch {
+            Write-Error "Upload failed: $($_.Exception.Message)"
+            exit 1
+          }
