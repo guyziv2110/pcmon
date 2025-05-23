@@ -26,7 +26,7 @@ jobs:
       - name: Build MSI with Wix Toolset 6
         run: dotnet build ./MyInstaller.wixproj -p:InstallationCode=${{ github.event.inputs.installationCode }} -c Release
 
-        - name: Get Signed Upload URL from Firebase
+      - name: Get Signed Upload URL from Firebase
         id: get-signed-url
         shell: pwsh
         run: |
