@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Directory Id="UtilityDir" Name="Utility">
+        <Component Id="cmp_InstallationUtilityExe" Guid="*">
+          <File Id="InstallationUtilityExe" Source=".\InstallationUtility\bin\Release\net8.0\win-x64\publish\InstallationUtility.exe" KeyPath="yes" />
+        </Component>
+        
+        <!-- Include all required dependencies -->
+		<!-- <Component Id="cmp_InstallationUtilityDll" Guid="*"> -->
+		  <!-- <File Id="InstallationUtilityDll" Source=".\InstallationUtility\bin\Release\net8.0\win-x64\publish\InstallationUtility.dll" KeyPath="yes" /> -->
+		<!-- </Component> -->
+		<!-- <Component Id="cmp_RuntimeConfig" Guid="*"> -->
+		  <!-- <File Id="RuntimeConfig" Source=".\InstallationUtility\bin\Release\net8.0\win-x64\publish\InstallationUtility.runtimeconfig.json" KeyPath="yes" /> -->
+		<!-- </Component> -->
+		<!-- <Component Id="cmp_Pipelines" Guid="*"> -->
+		  <!-- <File Id="Pipelines" Source=".\InstallationUtility\bin\Release\net8.0\win-x64\publish\System.IO.Pipelines.dll" KeyPath="yes" /> -->
+		<!-- </Component> -->
+		<!-- <Component Id="cmp_HttpJson" Guid="*"> -->
+		  <!-- <File Id="HttpJson" Source=".\InstallationUtility\bin\Release\net8.0\win-x64\publish\System.Net.Http.Json.dll" KeyPath="yes" /> -->
+		<!-- </Component> -->
+		<!-- <Component Id="cmp_EncodingsWeb" Guid="*"> -->
+		  <!-- <File Id="EncodingsWeb" Source=".\InstallationUtility\bin\Release\net8.0\win-x64\publish\System.Text.Encodings.Web.dll" KeyPath="yes" /> -->
+		<!-- </Component> -->
+		<!-- <Component Id="cmp_TextJson" Guid="*"> -->
+		  <!-- <File Id="TextJson" Source=".\InstallationUtility\bin\Release\net8.0\win-x64\publish\System.Text.Json.dll" KeyPath="yes" /> -->
+		<!-- </Component> -->
+
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+
+  
+  <Fragment>
+	<ComponentGroup Id="UtilityComponents">
+		<ComponentRef Id="cmp_InstallationUtilityExe" />
+		<!-- <ComponentRef Id="cmp_InstallationUtilityDll" /> -->
+		<!-- <ComponentRef Id="cmp_RuntimeConfig" /> -->
+		<!-- <ComponentRef Id="cmp_Pipelines" /> -->
+		<!-- <ComponentRef Id="cmp_HttpJson" /> -->
+		<!-- <ComponentRef Id="cmp_EncodingsWeb" /> -->
+		<!-- <ComponentRef Id="cmp_TextJson" /> -->
+	</ComponentGroup>
+
+  </Fragment>
+</Wix>

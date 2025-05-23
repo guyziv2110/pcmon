@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="cmp_RmmMonitorAppExe" Guid="*">
+        <File Id="ServiceExe" Source="publish\RmmMonitor.App.exe" KeyPath="yes" />
+        <ServiceInstall Id="ServiceInstaller"
+                       Type="ownProcess"
+                       Name="RmmMonitorService"
+                       DisplayName="RMM Monitor Service"
+                       Description="Monitoring service for RMM"
+                       Start="auto"
+                       Account="LocalSystem"
+                       ErrorControl="normal" />
+        <ServiceControl Id="ServiceControl"
+                       Name="RmmMonitorService"
+                       Start="install"
+                       Stop="both"
+                       Remove="uninstall"
+                       Wait="yes" />
+      </Component>
+
+      <Component Id="cmp_MonoPosixHelperDll" Guid="*">
+        <File Source="publish\MonoPosixHelper.dll" />
+      </Component>
+
+      <Component Id="cmp_libMonoPosixHelperDll" Guid="*">
+        <File Source="publish\libMonoPosixHelper.dll" />
+      </Component>
+	  
+	  <Component Id="cmp_appsettingsJson" Guid="*">
+        <File Source="publish\appsettings.json" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents">
+      <ComponentRef Id="cmp_RmmMonitorAppExe" />
+      <ComponentRef Id="cmp_MonoPosixHelperDll" />
+      <ComponentRef Id="cmp_libMonoPosixHelperDll" />
+      <ComponentRef Id="cmp_appsettingsJson" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

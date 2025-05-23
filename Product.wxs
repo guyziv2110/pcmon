@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Package
+    Name="MyApp Installer"
+    Manufacturer="My Company"
+    Version="1.0.0"
+    UpgradeCode="A2D43905-28C9-4C0A-A331-27BFE296E22E">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+    <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
+    
+    <!-- Define the installation code property with a default value -->
+    <Property Id="INSTALLATIONCODE" Value="$(var.InstallationCode)" Secure="true" />
+
+    <!-- Binary must be defined before custom actions that reference it -->
+    <Binary Id="InstallationUtilityExe" SourceFile=".\InstallationUtility\bin\Release\net8.0\win-x64\publish\InstallationUtility.exe" />
+    
+    <!-- Define standard directories -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="MyApp" />
+    </StandardDirectory>
+    
+	
+    <Feature Id="ProductFeature" Title="MyApp" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="UtilityComponents" />
+    </Feature>
+
+    <!-- UI Configuration -->
+    <ui:WixUI Id="WixUI_InstallDir" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <!-- Custom Banners and Background Images -->
+    <WixVariable Id="WixUIDialogBmp" Value="MyLogo.png" />
+    <WixVariable Id="WixUIBannerBmp" Value="MyBanner.png" />
+    
+	<!-- <CustomAction Id="ShowValidationError" -->
+              <!-- Error="Installation code invalid. Please check." /> -->
+	<!-- <CustomAction Id="ReadValidationResult" -->
+              <!-- Script="vbscript" -->
+              <!-- ScriptSourceFile="ReadValidationResult.vbs" -->
+              <!-- Execute="immediate" -->
+              <!-- Return="check" /> -->
+			  
+	  <!-- <CustomAction Id="ReadValidationResult" -->
+		  <!-- BinaryRef="InstallationUtilityExe" -->
+		  <!-- ExeCommand="valres" -->
+		  <!-- Execute="immediate" -->
+		  <!-- Return="check" /> -->
+			  
+		<!-- <CustomAction Id="ReadValidationResult" -->
+              <!-- Property="VALIDATION_FAILED" -->
+              <!-- ExeCommand="validate $(var.InstallationCode)" -->
+              <!-- Execute="immediate" -->
+              <!-- Return="ignore" /> -->
+			  
+    <!-- Custom actions using BinaryRef approach -->
+    <CustomAction Id="ValidateInstallationCode"
+                  BinaryRef="InstallationUtilityExe"
+                  ExeCommand="validate $(var.InstallationCode)"
+                  Execute="immediate"
+                  Return="ignore" />
+				  
+
+				  
+	
+	<!-- <Property Id="VALIDATION_RESULT" Value="0" /> -->
+	
+	<!-- <CustomAction Id="SetValidationResult"  -->
+              <!-- Property="VALIDATION_RESULT"  -->
+              <!-- Value="[ValidateInstallationCode]" /> -->
+
+<!-- Show error if needed -->
+<CustomAction Id="ShowValidationError"
+              Error="Validation failed: your installation code is invalid." />
+    
+    <CustomAction Id="WriteInstallationCode" 
+                  BinaryRef="InstallationUtilityExe"
+                  ExeCommand="write $(var.InstallationCode) [INSTALLFOLDER]"
+                  Execute="deferred"
+                  Return="check"
+                  HideTarget="no"
+                  Impersonate="no" />
+    
+    <CustomAction Id="SetInstallationStatusInstalled" 
+                  BinaryRef="InstallationUtilityExe"
+                  ExeCommand="set-installed $(var.InstallationCode)"
+                  Execute="commit"
+                  Return="ignore"
+                  HideTarget="no"
+                  Impersonate="no" />
+    
+    <CustomAction Id="SetInstallationStatusUninstalled" 
+                  BinaryRef="InstallationUtilityExe"
+                  ExeCommand="set-uninstalled $(var.InstallationCode)"
+                  Execute="deferred"
+                  Return="ignore"
+                  HideTarget="no"
+                  Impersonate="no" />
+    
+	<CustomAction Id="FailValidateCode" Error="Could not validate installation code. Please ask your technician for updated MSI." />
+	<CustomAction Id="FailWriteCode" Error="Could not store installation code. Please ask your technician for help." />
+	<CustomAction Id="FailWriteStatusCode" Error="Could not update status for installation code. Please ask your technician for help." />
+	
+	
+
+	<Property Id="CODE_VALIDATION_FAILED_FLAG">
+	  <DirectorySearch Id="SearchInProgramData1" Path="[CommonAppDataFolder]MyApp\Logs">
+		<FileSearch Id="FlagFileSearch1" Name="cvf.flag" />
+	  </DirectorySearch>
+	</Property>
+	
+	<Property Id="WRITE_VALIDATION_FAILED_FLAG">
+	  <DirectorySearch Id="SearchInProgramData2" Path="[CommonAppDataFolder]MyApp\Logs">
+		<FileSearch Id="FlagFileSearch2" Name="cwf.flag" />
+	  </DirectorySearch>
+	</Property>
+	
+		<Property Id="WRITE_SERVER_STATUS_FAILED_FLAG">
+	  <DirectorySearch Id="SearchInProgramData3" Path="[CommonAppDataFolder]MyApp\Logs">
+		<FileSearch Id="FlagFileSearch3" Name="csuf.flag" />
+	  </DirectorySearch>
+	</Property>
+	
+    <!-- Installation sequence -->
+    <InstallExecuteSequence>
+      <!-- First validate that the installation code is valid -->
+      <Custom Action="ValidateInstallationCode" Before="AppSearch" Condition="NOT Installed" />
+	  <Custom Action="FailValidateCode" After="AppSearch" Condition="CODE_VALIDATION_FAILED_FLAG" />
+	<!-- <Custom Action="FailInstall" After="ValidateInstallationCode" Condition="FileExists('C:\ProgramData\MyApp\Logs\fail.flag')" /> -->
+	   <!-- <Custom Action="SetValidationResult" After="ValidateInstallationCode" /> -->
+	  <!-- <Custom Action="ShowValidationError" After="ValidateInstallationCode" Condition="ValidateInstallationCode = &quot;1&quot;" /> -->
+	    <!-- <Custom Action="ReadValidationResult" After="ValidateInstallationCode" /> -->
+  <!-- <Custom Action="ShowValidationError" After="ReadValidationResult" Condition="VALIDATION_FAILED = &quot;1&quot;"/> -->
+      <!-- <Custom Action="ReadValidationResult" After="ValidateInstallationCode" /> -->
+	  <!-- <Custom Action="ShowValidationError" After="ReadValidationResult" Condition="VALIDATION_FAILED = &quot;1&quot;" /> -->
+      <!-- Write the installation code to registry and file -->
+      <Custom Action="WriteInstallationCode" Before="InstallFiles" Condition="NOT Installed" />
+	  <!-- <Custom Action="FailWriteCode" After="WriteInstallationCode" Condition="WRITE_VALIDATION_FAILED_FLAG" /> -->
+	  
+      <!-- Set the installation status to installed -->
+      <Custom Action="SetInstallationStatusInstalled" After="WriteInstallationCode" Condition="NOT Installed" />
+	  <!-- <Custom Action="FailWriteStatusCode" After="SetInstallationStatusInstalled" Condition="WRITE_SERVER_STATUS_FAILED_FLAG" /> -->
+      
+      <!-- Set the installation status to uninstalled -->
+      <Custom Action="SetInstallationStatusUninstalled" Before="RemoveFiles" Condition="REMOVE = &quot;ALL&quot;" />
+    </InstallExecuteSequence>
+  </Package>
+</Wix>

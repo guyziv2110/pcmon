@@ -1,0 +1,26 @@
+<Project Sdk="WixToolset.Sdk/6.0.0">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <Platform>x64</Platform>
+    <!-- Default installation code - will be overridden by command line -->
+	<DefineConstants>InstallationCode=$(InstallationCode)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <WixExtension Include="WixToolset.UI.wixext" />
+    <WixExtension Include="WixToolset.Util.wixext" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="6.0.0" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="6.0.0" />
+  </ItemGroup>
+  
+<ItemGroup>
+  <BindInputPaths Include="InstallationUtility\bin\Release\net8.0">
+    <BindPathName>InstallationUtility</BindPathName>
+  </BindInputPaths>
+</ItemGroup>
+
+
+</Project>
