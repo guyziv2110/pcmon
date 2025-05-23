@@ -22,6 +22,19 @@ jobs:
 
       - name: Publish InstallationUtility
         run: dotnet publish ./InstallationUtility/InstallationUtility.sln -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+        
+      - name: Confirm publish folder and EXE exist
+        run: |
+            Write-Host "Listing root directory contents:"
+            Get-ChildItem -Recurse
+
+            Write-Host "Checking if file exists:"
+            if (-Not (Test-Path "publish\RmmMonitor.App.exe")) {
+              Write-Error "❌ File not found: publish\RmmMonitor.App.exe"
+              exit 1
+            } else {
+              Write-Host "✅ File found: publish\RmmMonitor.App.exe"
+            }
 
       - name: Build MSI with Wix Toolset 6
         run: dotnet build ./MyInstaller.wixproj -p:InstallationCode=${{ github.event.inputs.installationCode }} -c Release
@@ -32,55 +45,14 @@ jobs:
             $msiPath = "./bin/x64/Release/MyInstaller.msi"
 
             if (-not (Test-Path $msiPath)) {
-                Write-Error "MSI file not found at: $msiPath"
-                Get-ChildItem -Recurse -Filter "*.msi" | ForEach-Object { Write-Host "Found MSI: $($_.FullName)" }
-                exit 1
+              Write-Error "MSI file not found"
+              exit 1
             }
-          
-            Write-Host "Found MSI file: $msiPath"
-          $fileSize = (Get-Item $msiPath).Length
-          Write-Host "File size: $fileSize bytes"
-          
-          # העלאה דרך Firebase Function שלך
-          $url = "https://us-central1-pcmon-337e3.cloudfunctions.net/uploadMSISimple?installationCode=$installationCode"
-          
-          try {
-            # קריאת הקובץ כ-bytes
-            $fileBytes = [System.IO.File]::ReadAllBytes($msiPath)
-            
-            # שימוש ב-WebRequest במקום RestMethod עבור קבצים גדולים
-            $request = [System.Net.WebRequest]::Create($url)
-            $request.Method = "POST"
-            $request.ContentType = "application/octet-stream"
-            $request.ContentLength = $fileBytes.Length
-            
-            # כתיבת הנתונים
-            $requestStream = $request.GetRequestStream()
-            $requestStream.Write($fileBytes, 0, $fileBytes.Length)
-            $requestStream.Close()
-            
-            # קבלת התשובה
-            $response = $request.GetResponse()
-            $responseStream = $response.GetResponseStream()
-            $reader = New-Object System.IO.StreamReader($responseStream)
-            $responseText = $reader.ReadToEnd()
-            
-            $reader.Close()
-            $responseStream.Close()
-            $response.Close()
-            
-            Write-Host "Upload successful!"
-            Write-Host "Response: $responseText"
-            
-            # פרסור JSON response
-            $jsonResponse = $responseText | ConvertFrom-Json
-            if ($jsonResponse.downloadURL) {
-              Write-Host "Download URL: $($jsonResponse.downloadURL)"
-            }
-            
-          } catch {
-            Write-Error "Upload failed: $($_.Exception.Message)"
-            Write-Host "Full error details:"
-            Write-Host $_.Exception.ToString()
-            exit 1
-          }
+
+            $url = "https://us-central1-pcmon-337e3.cloudfunctions.net/uploadMSISimple?installationCode=$installationCode"
+
+            # שימוש ב-cURL
+            curl -X POST `
+                 -H "Content-Type: application/octet-stream" `
+                 --data-binary "@$msiPath" `
+                 "$url"
