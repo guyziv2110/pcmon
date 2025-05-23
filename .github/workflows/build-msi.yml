@@ -23,19 +23,6 @@ jobs:
       - name: Publish InstallationUtility
         run: dotnet publish ./InstallationUtility/InstallationUtility.sln -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
         
-      - name: Confirm publish folder and EXE exist
-        run: |
-            Write-Host "Listing root directory contents:"
-            Get-ChildItem -Recurse
-
-            Write-Host "Checking if file exists:"
-            if (-Not (Test-Path "publish\RmmMonitor.App.exe")) {
-              Write-Error "❌ File not found: publish\RmmMonitor.App.exe"
-              exit 1
-            } else {
-              Write-Host "✅ File found: publish\RmmMonitor.App.exe"
-            }
-
       - name: Build MSI with Wix Toolset 6
         run: dotnet build ./MyInstaller.wixproj -p:InstallationCode=${{ github.event.inputs.installationCode }} -c Release
 
