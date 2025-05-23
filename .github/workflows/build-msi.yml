@@ -22,48 +22,24 @@ jobs:
 
       - name: Publish InstallationUtility
         run: dotnet publish ./InstallationUtility/InstallationUtility.sln -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-        
-      - name: Confirm publish folder and EXE exist
-        run: |
-            Write-Host "Listing root directory contents:"
-            Get-ChildItem -Recurse
-
-            Write-Host "Checking if file exists:"
-            if (-Not (Test-Path "publish\RmmMonitor.App.exe")) {
-              Write-Error "❌ File not found: publish\RmmMonitor.App.exe"
-              exit 1
-            } else {
-              Write-Host "✅ File found: publish\RmmMonitor.App.exe"
-            }
 
       - name: Build MSI with Wix Toolset 6
         run: dotnet build ./MyInstaller.wixproj -p:InstallationCode=${{ github.event.inputs.installationCode }} -c Release
 
       - name: Upload MSI via Firebase Function
         run: |
-          $installationCode = "${{ github.event.inputs.installationCode }}"
-          $msiPath = "./bin/x64/Release/MyInstaller.msi"  # עדכן לנתיב הנכון
-          
-          # בדיקה שהקובץ קיים
-          if (-not (Test-Path $msiPath)) {
-            Write-Error "MSI file not found at: $msiPath"
-            Get-ChildItem -Recurse -Filter "*.msi" | ForEach-Object { Write-Host "Found MSI: $($_.FullName)" }
-            exit 1
-          }
-          
-          # העלאה דרך Firebase Function שלך
-          $url = "https://us-central1-pcmon-337e3.cloudfunctions.net/uploadMSI?installationCode=$installationCode"
-          
-          try {
-            $response = Invoke-RestMethod -Uri $url `
-              -Method POST `
-              -Headers @{"Content-Type" = "application/octet-stream"} `
-              -InFile $msiPath
-            
-            Write-Host "Upload successful!"
-            Write-Host "Download URL: $($response.downloadURL)"
-            
-          } catch {
-            Write-Error "Upload failed: $($_.Exception.Message)"
-            exit 1
-          }
+            $installationCode = "${{ github.event.inputs.installationCode }}"
+            $msiPath = "./bin/x64/Release/MyInstaller.msi"
+
+            if (-not (Test-Path $msiPath)) {
+              Write-Error "MSI file not found"
+              exit 1
+            }
+
+            $url = "https://us-central1-pcmon-337e3.cloudfunctions.net/uploadMSISimple?installationCode=$installationCode"
+
+            # שימוש ב-cURL
+            curl -X POST `
+                 -H "Content-Type: application/octet-stream" `
+                 --data-binary "@$msiPath" `
+                 "$url"
