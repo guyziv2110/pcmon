@@ -35,15 +35,16 @@ jobs:
             $installationCode = "${{ github.event.inputs.installationCode }}"
             $msiPath = "./bin/x64/Release/MyInstaller.msi"
 
-            if (-not (Test-Path $msiPath)) {
-              Write-Error "MSI file not found"
-              exit 1
-            }
+            $signedUrl = "${{ env.signed_url }}"
+            $fileBytes = [System.IO.File]::ReadAllBytes($msiPath)
 
-            $url = "https://us-central1-pcmon-337e3.cloudfunctions.net/uploadMSISimple?installationCode=$installationCode"
+            $request = [System.Net.WebRequest]::Create($signedUrl)
+            $request.Method = "PUT"
+            $request.ContentType = "application/octet-stream"
+            $request.ContentLength = $fileBytes.Length
+            $requestStream = $request.GetRequestStream()
+            $requestStream.Write($fileBytes, 0, $fileBytes.Length)
+            $requestStream.Close()
 
-            # שימוש ב-cURL
-            curl -X POST `
-                 -H "Content-Type: application/octet-stream" `
-                 --data-binary "@$msiPath" `
-                 "$url"
+            $response = $request.GetResponse()
+            $response.Close()
