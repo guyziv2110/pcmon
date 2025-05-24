@@ -38,19 +38,33 @@ jobs:
 
           # Parse the signed URL from the response
           $signedUrl = $response.url
-
+          Write-Host "Signed URL: $signedUrl"
+          
           # Read the MSI file bytes
           $fileBytes = [System.IO.File]::ReadAllBytes($msiPath)
 
-          # Upload the file using PUT request
+          # Upload the file using PUT request with proper headers
           $uploadRequest = [System.Net.WebRequest]::Create($signedUrl)
           $uploadRequest.Method = "PUT"
+          $uploadRequest.ContentType = "application/octet-stream"  # This is crucial!
           $uploadRequest.ContentLength = $fileBytes.Length
+
           $uploadStream = $uploadRequest.GetRequestStream()
           $uploadStream.Write($fileBytes, 0, $fileBytes.Length)
           $uploadStream.Close()
 
-          $uploadResponse = $uploadRequest.GetResponse()
-          $uploadResponse.Close()
+          try {
+              $uploadResponse = $uploadRequest.GetResponse()
+              Write-Host "Upload successful!"
+              $uploadResponse.Close()
+          } catch {
+              Write-Host "Upload failed: $($_.Exception.Message)"
+              # Get more details about the error
+              if ($_.Exception.Response) {
+                  $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                  $errorDetails = $reader.ReadToEnd()
+                  Write-Host "Error details: $errorDetails"
+                  $reader.Close()
+              }
+          }
 
-          Write-Host "MSI uploaded successfully."
