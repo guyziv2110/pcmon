@@ -37,7 +37,7 @@ jobs:
           $response = Invoke-RestMethod -Method GET -Uri "https://us-central1-pcmon-337e3.cloudfunctions.net/getSignedUploadUrl?installationCode=$installationCode"
 
           # Parse the signed URL from the response
-          $signedUrl = $response.signedUrl
+          $signedUrl = $response.url
 
           # Read the MSI file bytes
           $fileBytes = [System.IO.File]::ReadAllBytes($msiPath)
