@@ -26,26 +26,31 @@ jobs:
       - name: Build MSI with Wix Toolset 6
         run: dotnet build ./MyInstaller.wixproj -p:InstallationCode=${{ github.event.inputs.installationCode }} -c Release
 
-      - name: Get Signed Upload URL from Firebase
-        run: $installationCode = "${{ github.event.inputs.installationCode }}"
-             $response = Invoke-RestMethod -Method POST -Uri "https://us-central1-pcmon-337e3.cloudfunctions.net/getSignedUploadUrl?installationCode=$installationCode"
-             echo "signed_url=$($response.signedUrl)" >> $env:GITHUB_ENV
-
-      - name: Upload MSI via Firebase Function
+      - name: Get Signed Upload URL and Upload MSI
+        env:
+          INSTALLATION_CODE: ${{ github.event.inputs.installationCode }}
         run: |
-            $installationCode = "${{ github.event.inputs.installationCode }}"
-            $msiPath = "./bin/x64/Release/MyInstaller.msi"
+          $installationCode = "${{ github.event.inputs.installationCode }}"
+          $msiPath = "./bin/x64/Release/MyInstaller.msi"
 
-            $signedUrl = "${{ env.signed_url }}"
-            $fileBytes = [System.IO.File]::ReadAllBytes($msiPath)
+          # Get signed upload URL
+          $response = Invoke-RestMethod -Method POST -Uri "https://us-central1-pcmon-337e3.cloudfunctions.net/getSignedUploadUrl?installationCode=$installationCode"
 
-            $request = [System.Net.WebRequest]::Create($signedUrl)
-            $request.Method = "PUT"
-            $request.ContentType = "application/octet-stream"
-            $request.ContentLength = $fileBytes.Length
-            $requestStream = $request.GetRequestStream()
-            $requestStream.Write($fileBytes, 0, $fileBytes.Length)
-            $requestStream.Close()
+          # Parse the signed URL from the response
+          $signedUrl = $response.signedUrl
 
-            $response = $request.GetResponse()
-            $response.Close()
+          # Read the MSI file bytes
+          $fileBytes = [System.IO.File]::ReadAllBytes($msiPath)
+
+          # Upload the file using PUT request
+          $uploadRequest = [System.Net.WebRequest]::Create($signedUrl)
+          $uploadRequest.Method = "PUT"
+          $uploadRequest.ContentLength = $fileBytes.Length
+          $uploadStream = $uploadRequest.GetRequestStream()
+          $uploadStream.Write($fileBytes, 0, $fileBytes.Length)
+          $uploadStream.Close()
+
+          $uploadResponse = $uploadRequest.GetResponse()
+          $uploadResponse.Close()
+
+          Write-Host "MSI uploaded successfully."
