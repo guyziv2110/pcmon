@@ -34,7 +34,7 @@ jobs:
           $msiPath = "./bin/x64/Release/MyInstaller.msi"
 
           # Get signed upload URL
-          $response = Invoke-RestMethod -Method POST -Uri "https://us-central1-pcmon-337e3.cloudfunctions.net/getSignedUploadUrl?installationCode=$installationCode"
+          $response = Invoke-RestMethod -Method GET -Uri "https://us-central1-pcmon-337e3.cloudfunctions.net/getSignedUploadUrl?installationCode=$installationCode"
 
           # Parse the signed URL from the response
           $signedUrl = $response.signedUrl
